@@ -2,7 +2,7 @@
 
 > VM-based programming language with manual memory management, DLL/FFI support and Native UI.
 
-![Version](https://img.shields.io/badge/version-3.3.9-blue)
+![Version](https://img.shields.io/badge/version-3.3.10-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-success)
 ![Runtime](https://img.shields.io/badge/runtime-VM-orange)
 
@@ -17,7 +17,7 @@ CDot is a virtual machine programming language designed for:
 * Games
 * Custom DSL creation
 
-The language combines a lightweight runtime, manual memory management and optional extension modules for native Windows UI and DLL interoperability.
+The language combines a lightweight runtime, manual memory management and optional extension modules for native Windows UI, DLL interoperability, file system access and string operations.
 
 ---
 
@@ -28,11 +28,11 @@ The language combines a lightweight runtime, manual memory management and option
 * Registers and shared memory
 * Functions & Call Stack
 * Arrays and structures
-* String utilities
-* File system API
 * Random utilities
 * Native Windows UI
 * DLL / FFI support
+* File system API
+* String utilities
 * Configurable runtime
 
 ---
@@ -86,7 +86,6 @@ Memory allocation is handled through `made`, while `not` performs logical invers
 * xor
 * inc
 * dec
-* exc
 
 ### Flow Control
 
@@ -108,19 +107,6 @@ Memory allocation is handled through `made`, while `not` performs logical invers
 * Dynamic indexing
 * Nested structures
 
-### Strings
-
-* split
-* trim
-* lowercase
-* uppercase
-
-### File System
-
-* Read files
-* Write files
-* Execute external files
-
 ### Input
 
 * Blocking input
@@ -129,6 +115,8 @@ Memory allocation is handled through `made`, while `not` performs logical invers
 ---
 
 ## Native Extensions
+
+> Since v3.3.10, all extension commands — including string operations and file system access — are only available once the corresponding `.ddl` library is `#include`-d in the source file. Nothing in this section is part of the always-available core.
 
 ### DLL / FFI
 
@@ -168,6 +156,36 @@ Supports:
 * GroupBoxes
 * PictureBoxes
 
+### File System
+
+Available through:
+
+```text
+#include fsapi.ddl
+```
+
+Commands:
+
+* wrt — write to file
+* rdl — read from file
+* exs — execute external file
+
+### Strings
+
+Available through:
+
+```text
+#include strapi.ddl
+```
+
+Commands:
+
+* spt — split
+* trm — trim
+* low — lowercase
+* big — uppercase
+* exc — execute command / evaluate math expression
+
 ---
 
 ## Configuration
@@ -201,6 +219,13 @@ hlt
 
 ## Version
 
-**CDot Language v3.3.9**
+**CDot Language v3.3.10**
 
-Core Language + DLL/FFI + Native UI.
+Core Language + DLL/FFI + Native UI + File System + Strings.
+
+### Changelog
+
+**v3.3.10**
+* `wrt`, `rdl`, `exs` moved out of the core into the new `fsapi.ddl` extension.
+* `spt`, `trm`, `low`, `big`, `exc` moved out of the core into the new `strapi.ddl` extension.
+* All four extensions (`dllapi.ddl`, `winapi.ddl`, `fsapi.ddl`, `strapi.ddl`) now follow the same `#include`-gated model.

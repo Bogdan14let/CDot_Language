@@ -1,3 +1,5 @@
+#include strapi.ddl
+
 cmd stdio.pop 0s
 	; 0s - string
 	spt 0s "\:" string

@@ -1,3 +1,5 @@
+#include fsapi.ddl
+
 cmd stdfs.apd 0s 1s
 	; file name, text
 	rdl 0s 2s ; read the file

@@ -136,7 +136,7 @@ namespace CDotNew
             bool clear = false;
             bool cur = false;
             bool ending = true;
-            string version = "v3.3.9";
+            string version = "v3.3.10";
 
             if (args.Length == 0) return;
 

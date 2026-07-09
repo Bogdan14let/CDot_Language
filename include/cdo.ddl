@@ -1,3 +1,6 @@
+#include strapi.ddl
+#include fsapi.ddl
+
 cmd cdo.Parse 0s 1s
     ; 0s - file name, 1s - list name
 
