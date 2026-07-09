@@ -151,7 +151,7 @@ namespace CDotNew
                 Console.WriteLine("- cdot new -> creates new project");
                 Console.WriteLine("- cdot run -> runs created project");
                 Console.WriteLine("- cdot -c fileName -> compiles project to the fileName.dme");
-                Console.WriteLine("- cdot -f fileName -p -> compiles project to the fileName.exe");
+                Console.WriteLine("- cdot -c fileName -p -> compiles project to the fileName.exe");
                 Console.WriteLine("- cdot fileName.(cdt/cdot/dme) -> runs fileName.(cdt/cdot/dme)");
             }
             else if (args[0] == "-c")
