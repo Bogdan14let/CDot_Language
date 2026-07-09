@@ -53,6 +53,8 @@ Create a new project:
 cdot new
 ```
 
+> **Tip:** run `cdot help` at any time to see the full list of available CLI commands and options.
+
 ---
 
 ## Memory Model
