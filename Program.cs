@@ -144,6 +144,16 @@ namespace CDotNew
             {
                 Console.WriteLine($"CDot version: {version}");
             }
+            else if (args[0] == "help" && args.Length == 1)
+            {
+                Console.WriteLine($"--- CDot version: {version} ---");
+                Console.WriteLine("List commands:");
+                Console.WriteLine("- cdot new -> creates new project");
+                Console.WriteLine("- cdot run -> runs created project");
+                Console.WriteLine("- cdot -c fileName -> compiles project to the fileName.dme");
+                Console.WriteLine("- cdot -f fileName -p -> compiles project to the fileName.exe");
+                Console.WriteLine("- cdot fileName.(cdt/cdot/dme) -> runs fileName.(cdt/cdot/dme)");
+            }
             else if (args[0] == "-c")
             {
                 if (args.Length >= 2)
@@ -534,7 +544,7 @@ namespace CDotNew
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Error: File extension must be .cdt/.cdot, .dme or .exe!");
+                    Console.WriteLine("Error: File extension must be .cdt/.cdot, .dme or .exe! Please use command 'help'.");
                     Console.ResetColor();
                     if (pause) Console.ReadKey();
                 }
