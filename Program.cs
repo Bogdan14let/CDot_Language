@@ -148,10 +148,12 @@ namespace CDotNew
             {
                 Console.WriteLine($"--- CDot version: {version} ---");
                 Console.WriteLine("List commands:");
+                Console.WriteLine("- cdot -v -> shows CDot version");
                 Console.WriteLine("- cdot new -> creates new project");
                 Console.WriteLine("- cdot run -> runs created project");
                 Console.WriteLine("- cdot -c fileName -> compiles project to the fileName.dme");
                 Console.WriteLine("- cdot -c fileName -p -> compiles project to the fileName.exe");
+                Console.WriteLine("- cdot -c fileName -ddl -> compiles project to the fileName.ddl");
                 Console.WriteLine("- cdot fileName.(cdt/cdot/dme) -> runs fileName.(cdt/cdot/dme)");
             }
             else if (args[0] == "-c")
@@ -255,11 +257,18 @@ namespace CDotNew
                                 outputName += ".exe";
                             }
                         }
-                        else
+                        else if (!isPublish)
                         {
                             if (!outputName.EndsWith(".dme", StringComparison.OrdinalIgnoreCase))
                             {
                                 outputName += ".dme";
+                            }
+                        }
+                        else if (args[2] == "-ddl")
+                        {
+                            if (!outputName.EndsWith(".ddl", StringComparison.OrdinalIgnoreCase))
+                            {
+                                outputName += ".ddl";
                             }
                         }
 
@@ -311,7 +320,7 @@ namespace CDotNew
                             Console.ResetColor();
                             return;
                         }
-                        else
+                        else if (!isPublish)
                         {
                             // Без флага -p файл гарантированно будет иметь расширение .dme
                             fullCode = $"mov 4m {title}\n# MaxMemory {maxMemory}\n# AllowCMD {allowCMD}\n# Pause {paus}\n# Clear {clr}\n# Cursor {cur}\n# Ending {ending}\n" + fullCode;
@@ -321,6 +330,26 @@ namespace CDotNew
 
                             if (!Directory.Exists("output")) Directory.CreateDirectory("output");
                             File.WriteAllBytes($"output/{outputName}", encryptedBytes);
+
+                            // Получаем путь к иконке из словаря config (который у тебя уже есть выше в коде)
+                            string iconFromConfig = config.GetValueOrDefault("Icon", "");
+
+                            // Вызываем обработку иконки перед тем, как завершить метод
+                            HandleIcon(iconFromConfig, "output");
+
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine($"Compiled script file created at: output/{outputName} (Run it via interpreter or rebuild with -p to get standalone EXE)");
+                            Console.ResetColor();
+                            return;
+                        }
+                        else if (args[2] == "-ddl")
+                        {
+                            fullCode = $"mov 4m {title}\n# MaxMemory {maxMemory}\n# AllowCMD {allowCMD}\n# Pause {paus}\n# Clear {clr}\n# Cursor {cur}\n# Ending {ending}\n" + fullCode;
+
+                            byte[] cleanBytes = Encoding.UTF8.GetBytes(fullCode);
+
+                            if (!Directory.Exists("output")) Directory.CreateDirectory("output");
+                            File.WriteAllBytes($"output/{outputName}", cleanBytes);
 
                             // Получаем путь к иконке из словаря config (который у тебя уже есть выше в коде)
                             string iconFromConfig = config.GetValueOrDefault("Icon", "");
