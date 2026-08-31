@@ -127,7 +127,7 @@ namespace CDotNew
             if (TryLoadEmbeddedScript(out string? embeddedCode))
             {
                 Parser cdot = new Parser();
-                await cdot.Interpretator(embeddedCode!, 100, true);
+                await cdot.Interpretator(args, code: embeddedCode!, maxMemory: 100, allowCMD: true, argc: args.Length);
                 return;
             }
 
@@ -136,7 +136,7 @@ namespace CDotNew
             bool clear = false;
             bool cur = false;
             bool ending = true;
-            string version = "v3.3.10";
+            string version = "v4.4.18";
 
             if (args.Length == 0) return;
 
@@ -151,9 +151,9 @@ namespace CDotNew
                 Console.WriteLine("- cdot -v -> shows CDot version");
                 Console.WriteLine("- cdot new -> creates new project");
                 Console.WriteLine("- cdot run -> runs created project");
-                Console.WriteLine("- cdot -c fileName -> compiles project to the fileName.dme");
-                Console.WriteLine("- cdot -c fileName -p -> compiles project to the fileName.exe");
-                Console.WriteLine("- cdot -c fileName -ddl -> compiles project to the fileName.ddl");
+                Console.WriteLine("- cdot -c fileName outputFileName -> compiles project to the fileName.dme");
+                Console.WriteLine("- cdot -c fileName -p outputFileName -> compiles project to the fileName.exe");
+                Console.WriteLine("- cdot -c fileName -ddl outputFileName -> compiles project to the fileName.ddl");
                 Console.WriteLine("- cdot fileName.(cdt/cdot/dme) -> runs fileName.(cdt/cdot/dme)");
             }
             else if (args[0] == "-c")
@@ -246,35 +246,55 @@ namespace CDotNew
                         }
 
                         // Проверяем наличие флага -p
-                        bool isPublish = args.Length == 3 && args[2] == "-p";
+                        bool isPublish = args.Length >= 3 && args[2] == "-p";
                         string outputName = args[1];
 
                         // Корректируем расширение в зависимости от флага
-                        if (isPublish)
+                        if (args[2] == "-ddl")
+                        {
+                            if (!outputName.EndsWith(".ddl", StringComparison.OrdinalIgnoreCase))
+                            {
+                                outputName = (args.Length == 4 && !args[3].EndsWith(".ddl")) ? 
+                                args[3] + ".ddl" : 
+                                (args.Length == 4 && args[3].EndsWith(".ddl")) ? args[3] 
+                                : outputName + ".ddl";
+                            }
+                        }
+                        else if (isPublish)
                         {
                             if (!outputName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                             {
-                                outputName += ".exe";
+                                outputName = (args.Length == 4 && !args[3].EndsWith(".exe")) ? 
+                                    args[3] + ".exe" : 
+                                    (args.Length == 4 && args[3].EndsWith(".exe")) ? args[3] 
+                                    : outputName + ".exe";
                             }
                         }
                         else if (!isPublish)
                         {
                             if (!outputName.EndsWith(".dme", StringComparison.OrdinalIgnoreCase))
                             {
-                                outputName += ".dme";
-                            }
-                        }
-                        else if (args[2] == "-ddl")
-                        {
-                            if (!outputName.EndsWith(".ddl", StringComparison.OrdinalIgnoreCase))
-                            {
-                                outputName += ".ddl";
+                                outputName = (args.Length == 3 && !args[2].EndsWith(".dme")) ? 
+                                    args[2] + ".dme" : 
+                                    (args.Length == 3 && args[2].EndsWith(".dme")) ? args[2] 
+                                    : outputName + ".dme";
                             }
                         }
 
                         // ОБРАБОТКА СБОРКИ С АВТО-РАСШИРЕНИЯМИ
+                        if (args[2] == "-ddl")
+                        {
+                            fullCode = $"func [] setDllSettings\n    mov 4m {title}\n    # MaxMemory {maxMemory}\n    # AllowCMD {allowCMD}\n    # Pause {paus}\n    # Clear {clr}\n    # Cursor {cur}\n    # Ending {ending}\nret\n\n" + fullCode;
 
-                        if (isPublish)
+                            if (!Directory.Exists("output")) Directory.CreateDirectory("output");
+                            File.WriteAllText($"output/{outputName}", fullCode);
+
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine($"Compiled script file created at: output/{outputName} (Run it via interpreter or rebuild with -p to get standalone EXE)");
+                            Console.ResetColor();
+                            return;
+                        }
+                        else if (isPublish)
                         {
                             // Раз мы здесь и флаг -p активен, значит outputName гарантированно заканчивается на .exe
                             fullCode = $"mov 4m {title}\n# MaxMemory {maxMemory}\n# AllowCMD {allowCMD}\n# Pause {paus}\n# Clear {clr}\n# Cursor {cur}\n# Ending {ending}\n" + fullCode;
@@ -342,26 +362,6 @@ namespace CDotNew
                             Console.ResetColor();
                             return;
                         }
-                        else if (args[2] == "-ddl")
-                        {
-                            fullCode = $"mov 4m {title}\n# MaxMemory {maxMemory}\n# AllowCMD {allowCMD}\n# Pause {paus}\n# Clear {clr}\n# Cursor {cur}\n# Ending {ending}\n" + fullCode;
-
-                            byte[] cleanBytes = Encoding.UTF8.GetBytes(fullCode);
-
-                            if (!Directory.Exists("output")) Directory.CreateDirectory("output");
-                            File.WriteAllBytes($"output/{outputName}", cleanBytes);
-
-                            // Получаем путь к иконке из словаря config (который у тебя уже есть выше в коде)
-                            string iconFromConfig = config.GetValueOrDefault("Icon", "");
-
-                            // Вызываем обработку иконки перед тем, как завершить метод
-                            HandleIcon(iconFromConfig, "output");
-
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine($"Compiled script file created at: output/{outputName} (Run it via interpreter or rebuild with -p to get standalone EXE)");
-                            Console.ResetColor();
-                            return;
-                        }
                     }
                     else
                     {
@@ -375,11 +375,12 @@ namespace CDotNew
             {
                 if (args[0] == "run")
                 {
-                    if (args.Length == 1)
+                    if (args.Length >= 1)
                     {
                         string cfgPath = Path.Combine(Environment.CurrentDirectory, "config.cfg");
                         if (File.Exists(cfgPath))
                         {
+                            string[] argv = args[1..];
                             var config = File.ReadAllLines(cfgPath)
                                 .Select(l => l.Split(';')[0].Trim())
                                 .Where(l => l.Contains('='))
@@ -476,7 +477,7 @@ namespace CDotNew
                             }
 
                             Parser cdot = new Parser();
-                            await cdot.Interpretator(fullCode, maxMemory, allowCMD, clear, cur, ending: ending);
+                            await cdot.Interpretator(argv, fullCode, maxMemory, allowCMD, clear, cur, ending: ending, argc: argv.Length);
                             if (pause) Console.ReadKey();
                         }
                         else
@@ -513,7 +514,6 @@ namespace CDotNew
 
                             ; Window setings
                             Title = ""
-                            Icon = ""
 
                             ; Language setings
                             AllowCMD = true
@@ -530,8 +530,9 @@ namespace CDotNew
             {
                 Parser cdot = new Parser();
                 string path = CleanPath(args[0]);
+                string[] argv = args[1..];
 
-                if (path.EndsWith(".cdt") || path.EndsWith(".cdot") || path.EndsWith(".dme") || path.EndsWith(".exe"))
+                if (path.EndsWith(".cdt") || path.EndsWith(".cdot") || path.EndsWith(".dme"))
                 {
                     string fileName = Path.GetFileName(path);
                     string exeDir = AppContext.BaseDirectory;
@@ -556,18 +557,18 @@ namespace CDotNew
                         return;
                     }
 
-                    if (finalPath.EndsWith(".dme") || finalPath.EndsWith(".exe"))
+                    if (finalPath.EndsWith(".dme"))
                     {
                         byte[] encryptedBytes = File.ReadAllBytes(finalPath);
                         byte[] decryptedBytes = Cipher.EncryptDecrypt(encryptedBytes);
                         string cleanCode = System.Text.Encoding.UTF8.GetString(decryptedBytes);
 
-                        await cdot.Interpretator(cleanCode, 100, true);
+                        await cdot.Interpretator(argv: argv, code: cleanCode, maxMemory: 100, allowCMD: true, argc: argv.Length);
                     }
                     else
                     {
                         string code = File.ReadAllText(finalPath);
-                        await cdot.Interpretator(code, 100, true);
+                        await cdot.Interpretator(argv, code: code, maxMemory: 100, allowCMD: true, argc: argv.Length);
                     }
                 }
                 else
